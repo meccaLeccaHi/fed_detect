@@ -1,3 +1,19 @@
+
+'''
+Usage:
+    import os
+    os.chdir('/notebook/CJ/fed_detect/fr_mod/')
+    import fr_mod
+
+    foo = modmod.semantic_model()
+    a = foo.get_pred_from_samples()
+    print(a)
+
+    bar = modmod.rotation_model()
+    b = bar.get_pred_from_samples()
+    print(b)
+'''
+
 import os as _os
 import cv2 as _cv2
 import numpy as _np
