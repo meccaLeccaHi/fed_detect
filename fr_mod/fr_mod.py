@@ -30,7 +30,6 @@ class _common_model:
                 
         self.input_shape = (256,256,3)
         
-        #self._home_dir = '/notebook/CJ/fed_detect/modmod/'
         self.sample_dir = './samples/' # self._home_dir+
     
     def predict_from_samples(self):
@@ -38,19 +37,32 @@ class _common_model:
         # Get list of image files
         test_files = _os.listdir(self.sample_dir)
 
-        # Load images from 'samples' directory into numpy matrix
-        x_test = []
+        test_preds = []
+        
+        # Load each image in 'samples' directory and classify 
         for i,f in enumerate(test_files):
-            img = _cv2.imread(_os.path.join(self.sample_dir, f))
-            x_test.append(_cv2.resize(img, self.input_shape[:-1]))
+            
+            with open(_os.path.join(self.sample_dir, f), 'rb') as infile:
+                buf = infile.read()
 
-        # Normalize values
-        x_test  = _np.array(x_test, _np.float32) / 255.
+            # Use numpy to construct an array from the bytes
+            x = _np.fromstring(buf, dtype='uint8')
 
-        # Get prediction(s)
-        one_hot_pred = self._mod.predict(x_test, verbose=1)
+            raw_img = _cv2.imdecode(x, _cv2.CV_LOAD_IMAGE_COLOR)
 
-        return(test_files,one_hot_pred)
+            # Decode the array into an image
+            img = _cv2.resize(raw_img, self.input_shape[:-1])
+            #img = _cv2.imread(_os.path.join(self.sample_dir, f))
+            
+            # Normalize values
+            img = _np.array(img, _np.float32) / 255.
+            
+            # Get prediction(s)
+            one_hot_pred = self._mod.predict(_np.expand_dims(img, axis=0))[0] # verbose=1
+            
+            test_preds.append(one_hot_pred)
+
+        return(test_files, _np.stack(test_preds, axis=0))
         
 class semantic_model(_common_model):
     '''Class definition for semantic classification model'''
@@ -73,6 +85,8 @@ class semantic_model(_common_model):
     def get_pred_from_samples(self):
         
         (test_files, one_hot_pred) = self.predict_from_samples()
+
+         # Take max of each prediction, since it's a multi-class categorization
         prediction = _np.argmax(one_hot_pred, axis=1)
         pred_names = [self.class_name_dict[str(x)] for x in prediction]
         
@@ -98,6 +112,8 @@ class rotation_model(_common_model):
     def get_pred_from_samples(self):
         
         (test_files, one_hot_pred) = self.predict_from_samples()
+        
+        # Round output, since it's a binary categorization
         prediction = _np.round(one_hot_pred)
         pred_names = [self.class_name_dict[str(int(x))] for x in prediction]
         
