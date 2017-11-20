@@ -14,9 +14,17 @@ Usage:
     foo = modmod.semantic_model()  
     a = foo.get_pred_from_samples()  
     print(a)
+```
+```bash
+[('table.png', 'tables'), ('text.png', 'forms'), ('diagram.png', 'diagram'), ('equation.png', 'equations'), ('graph.png', 'graphs'), ('map.png', 'maps'), ('form.png', 'forms')]
+```
+```python
     bar = modmod.rotation_model()
     b = bar.get_pred_from_samples()
     print(b)
+```
+```bash
+[('upright.png', 'upright'), ('rotated.png', 'rotated')]
 ```
 
 **Semantic model class examples**  
