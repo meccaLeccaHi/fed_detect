@@ -5,11 +5,11 @@ Usage:
     os.chdir('/notebook/CJ/fed_detect/fr_mod/')
     import fr_mod
 
-    foo = modmod.semantic_model()
+    foo = fr_mod.semantic_model()
     a = foo.get_pred_from_samples()
     print(a)
 
-    bar = modmod.rotation_model()
+    bar = fr_mod.rotation_model()
     b = bar.get_pred_from_samples()
     print(b)
 '''
