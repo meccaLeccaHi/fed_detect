@@ -32,7 +32,26 @@ class _common_model:
         
         self.sample_dir = './samples/' # self._home_dir+
     
-    def predict_from_samples(self):
+    def predict_from_buffer(self, image_buffer):
+        
+        # Use numpy to construct an array from the bytes
+        x = _np.fromstring(image_buffer, dtype='uint8')
+
+        raw_img = _cv2.imdecode(x, _cv2.CV_LOAD_IMAGE_COLOR)
+
+        # Decode array into image
+        img = _cv2.resize(raw_img, self.input_shape[:-1])
+
+        # Normalize values
+        img = _np.array(img, _np.float32) / 255.
+
+        # Get prediction(s)
+        one_hot_pred = self._mod.predict(_np.expand_dims(img, axis=0))[0] # verbose=1
+        
+        return(one_hot_pred)
+    
+    
+    def _predict_from_samples(self):
 
         # Get list of image files
         test_files = _os.listdir(self.sample_dir)
@@ -45,11 +64,13 @@ class _common_model:
             with open(_os.path.join(self.sample_dir, f), 'rb') as infile:
                 buf = infile.read()
 
+            one_hot_pred = self.predict_from_buffer(buf)
+            
+            '''
             # Use numpy to construct an array from the bytes
             x = _np.fromstring(buf, dtype='uint8')
-
             raw_img = _cv2.imdecode(x, _cv2.CV_LOAD_IMAGE_COLOR)
-
+            
             # Decode the array into an image
             img = _cv2.resize(raw_img, self.input_shape[:-1])
             #img = _cv2.imread(_os.path.join(self.sample_dir, f))
@@ -59,6 +80,7 @@ class _common_model:
             
             # Get prediction(s)
             one_hot_pred = self._mod.predict(_np.expand_dims(img, axis=0))[0] # verbose=1
+            '''
             
             test_preds.append(one_hot_pred)
 
@@ -82,9 +104,19 @@ class semantic_model(_common_model):
         self._class_names = _np.load('cat_class_names.npy')
         self.class_name_dict = dict([[v,k] for k,v in self._class_names])
         
+    def get_pred_from_buffer(self, image_buffer):
+        
+        one_hot_pred = self.predict_from_buffer(image_buffer)
+
+        # Take max of each prediction, since it's a multi-class categorization
+        prediction = _np.argmax(one_hot_pred)
+        pred_names = self.class_name_dict[str(prediction)]
+        
+        return(pred_names)
+    
     def get_pred_from_samples(self):
         
-        (test_files, one_hot_pred) = self.predict_from_samples()
+        (test_files, one_hot_pred) = self._predict_from_samples()
 
          # Take max of each prediction, since it's a multi-class categorization
         prediction = _np.argmax(one_hot_pred, axis=1)
@@ -109,9 +141,19 @@ class rotation_model(_common_model):
         self._class_names = _np.load('rot_class_names.npy')
         self.class_name_dict = dict([[v,k] for k,v in self._class_names])
         
+    def get_pred_from_buffer(self, image_buffer):
+        
+        one_hot_pred = self.predict_from_buffer(image_buffer)
+
+        # Take max of each prediction, since it's a multi-class categorization
+        prediction = int(_np.round(one_hot_pred))
+        pred_names = self.class_name_dict[str(prediction)]
+        
+        return(pred_names)
+    
     def get_pred_from_samples(self):
         
-        (test_files, one_hot_pred) = self.predict_from_samples()
+        (test_files, one_hot_pred) = self._predict_from_samples()
         
         # Round output, since it's a binary categorization
         prediction = _np.round(one_hot_pred)
